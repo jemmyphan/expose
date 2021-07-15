@@ -1,9 +1,9 @@
 version: "3.7"
 services:
   expose:
-    image: beyondcodegmbh/expose-server:latest
+    image: jemmyphan/expose-server:0.0.1
     ports:
-      - 8080:${PORT}
+      - ${PORT}:${PORT}
     environment:
       port: ${PORT}
       domain: ${DOMAIN}
@@ -12,3 +12,4 @@ services:
     restart: always
     volumes:
       - ./database/expose.db:/root/.expose
+      - ./builds:/src/builds/
