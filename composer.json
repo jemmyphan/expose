@@ -16,9 +16,9 @@
         }
     ],
     "require": {
-        "php": "^7.3.0 || ^8.0",
+        "php": "^8.0",
         "ext-json": "*",
-        "padraic/phar-updater": "^1.0.6"
+        "laravel-zero/phar-updater": "^1.2"
     },
     "require-dev": {
         "cboden/ratchet": "^0.4.3",
@@ -27,6 +27,7 @@
         "clue/reactphp-sqlite": "dev-modular-worker-for-phar-support",
         "guzzlehttp/guzzle": "^7.2",
         "guzzlehttp/psr7": "^1.7",
+        "illuminate/log": "^8.0",
         "illuminate/http": "5.8.* || ^6.0 || ^7.0 || ^8.0",
         "illuminate/pipeline": "^7.6 || ^8.0",
         "illuminate/validation": "^7.7 || ^8.0",

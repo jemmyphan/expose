@@ -4,6 +4,7 @@ namespace App\Server;
 
 use App\Contracts\ConnectionManager as ConnectionManagerContract;
 use App\Contracts\DomainRepository;
+use App\Contracts\LoggerRepository;
 use App\Contracts\StatisticsCollector;
 use App\Contracts\StatisticsRepository;
 use App\Contracts\SubdomainGenerator;
@@ -17,6 +18,8 @@ use App\Server\Http\Controllers\Admin\DeleteSubdomainController;
 use App\Server\Http\Controllers\Admin\DeleteUsersController;
 use App\Server\Http\Controllers\Admin\DisconnectSiteController;
 use App\Server\Http\Controllers\Admin\DisconnectTcpConnectionController;
+use App\Server\Http\Controllers\Admin\GetLogsController;
+use App\Server\Http\Controllers\Admin\GetLogsForSubdomainController;
 use App\Server\Http\Controllers\Admin\GetSettingsController;
 use App\Server\Http\Controllers\Admin\GetSiteDetailsController;
 use App\Server\Http\Controllers\Admin\GetSitesController;
@@ -36,6 +39,7 @@ use App\Server\Http\Controllers\Admin\StoreUsersController;
 use App\Server\Http\Controllers\ControlMessageController;
 use App\Server\Http\Controllers\TunnelMessageController;
 use App\Server\Http\Router;
+use App\Server\LoggerRepository\NullLogger;
 use App\Server\StatisticsCollector\DatabaseStatisticsCollector;
 use App\Server\StatisticsRepository\DatabaseStatisticsRepository;
 use App\Server\SubdomainRepository\DatabaseSubdomainRepository;
@@ -141,17 +145,25 @@ class Factory
         $this->router->get('/api/statistics', GetStatisticsController::class, $adminCondition);
         $this->router->get('/api/settings', GetSettingsController::class, $adminCondition);
         $this->router->post('/api/settings', StoreSettingsController::class, $adminCondition);
+
         $this->router->get('/api/users', GetUsersController::class, $adminCondition);
         $this->router->post('/api/users', StoreUsersController::class, $adminCondition);
         $this->router->get('/api/users/{id}', GetUserDetailsController::class, $adminCondition);
+        $this->router->delete('/api/users/{id}', DeleteUsersController::class, $adminCondition);
+
+        $this->router->get('/api/logs', GetLogsController::class, $adminCondition);
+        $this->router->get('/api/logs/{subdomain}', GetLogsForSubdomainController::class, $adminCondition);
+
         $this->router->post('/api/domains', StoreDomainController::class, $adminCondition);
         $this->router->delete('/api/domains/{domain}', DeleteSubdomainController::class, $adminCondition);
+
         $this->router->post('/api/subdomains', StoreSubdomainController::class, $adminCondition);
         $this->router->delete('/api/subdomains/{subdomain}', DeleteSubdomainController::class, $adminCondition);
-        $this->router->delete('/api/users/{id}', DeleteUsersController::class, $adminCondition);
+
         $this->router->get('/api/sites', GetSitesController::class, $adminCondition);
         $this->router->get('/api/sites/{site}', GetSiteDetailsController::class, $adminCondition);
         $this->router->delete('/api/sites/{id}', DisconnectSiteController::class, $adminCondition);
+
         $this->router->get('/api/tcp', GetTcpConnectionsController::class, $adminCondition);
         $this->router->delete('/api/tcp/{id}', DisconnectTcpConnectionController::class, $adminCondition);
     }
@@ -190,6 +202,7 @@ class Factory
         $this->bindConfiguration()
             ->bindSubdomainGenerator()
             ->bindUserRepository()
+            ->bindLoggerRepository()
             ->bindSubdomainRepository()
             ->bindDomainRepository()
             ->bindDatabase()
@@ -233,6 +246,15 @@ class Factory
     {
         app()->singleton(SubdomainRepository::class, function () {
             return app(config('expose.admin.subdomain_repository', DatabaseSubdomainRepository::class));
+        });
+
+        return $this;
+    }
+
+    protected function bindLoggerRepository()
+    {
+        app()->singleton(LoggerRepository::class, function () {
+            return app(config('expose.admin.logger_repository', NullLogger::class));
         });
 
         return $this;
@@ -294,7 +316,7 @@ class Factory
     protected function registerStatisticsCollector()
     {
         if (config('expose.admin.statistics.enable_statistics', true) === false) {
-            return;
+            return $this;
         }
 
         app()->singleton(StatisticsRepository::class, function () {

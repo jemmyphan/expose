@@ -3,6 +3,7 @@
 namespace App\Server\Connections;
 
 use App\Contracts\ConnectionManager as ConnectionManagerContract;
+use App\Contracts\LoggerRepository;
 use App\Contracts\StatisticsCollector;
 use App\Contracts\SubdomainGenerator;
 use App\Http\QueryParameters;
@@ -28,11 +29,15 @@ class ConnectionManager implements ConnectionManagerContract
     /** @var StatisticsCollector */
     protected $statisticsCollector;
 
-    public function __construct(SubdomainGenerator $subdomainGenerator, StatisticsCollector $statisticsCollector, LoopInterface $loop)
+    /** @var LoggerRepository */
+    protected $logger;
+
+    public function __construct(SubdomainGenerator $subdomainGenerator, StatisticsCollector $statisticsCollector, LoggerRepository $logger, LoopInterface $loop)
     {
         $this->subdomainGenerator = $subdomainGenerator;
         $this->loop = $loop;
         $this->statisticsCollector = $statisticsCollector;
+        $this->logger = $logger;
     }
 
     public function limitConnectionLength(ControlConnection $connection, int $maximumConnectionLength)
@@ -67,7 +72,20 @@ class ConnectionManager implements ConnectionManagerContract
 
         $this->statisticsCollector->siteShared($this->getAuthTokenFromConnection($connection));
 
+        $this->logger->logSubdomain($storedConnection->authToken, $storedConnection->subdomain);
+
+        $this->performConnectionCallback($storedConnection);
+
         return $storedConnection;
+    }
+
+    protected function performConnectionCallback(ControlConnection $connection)
+    {
+        $connectionCallback = config('expose.admin.connection_callback');
+
+        if ($connectionCallback !== null && class_exists($connectionCallback)) {
+            app($connectionCallback)->handle($connection);
+        }
     }
 
     public function storeTcpConnection(int $port, ConnectionInterface $connection): ControlConnection

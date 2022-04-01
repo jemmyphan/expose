@@ -301,6 +301,25 @@ return [
 
         /*
         |--------------------------------------------------------------------------
+        | Connection Callback
+        |--------------------------------------------------------------------------
+        |
+        | This is a callback method that will be called when a new connection is
+        | established.
+        | The \App\Client\Callbacks\WebHookConnectionCallback::class is included out of the box.
+        |
+        */
+        'connection_callback' => null,
+
+        'connection_callbacks' => [
+            'webhook' => [
+                'url' => null,
+                'secret' => null,
+            ],
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
         | Users
         |--------------------------------------------------------------------------
         |
@@ -326,6 +345,8 @@ return [
         'user_repository' => \App\Server\UserRepository\DatabaseUserRepository::class,
 
         'subdomain_repository' => \App\Server\SubdomainRepository\DatabaseSubdomainRepository::class,
+
+        'logger_repository' => \App\Server\LoggerRepository\NullLogger::class,
 
         /*
         |--------------------------------------------------------------------------
